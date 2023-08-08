@@ -1,0 +1,36 @@
+variables:
+  # GitLab default variables
+  CI_PROJECT_ID: "$CI_PROJECT_ID"
+  CI_PROJECT_NAME: "$CI_PROJECT_NAME"
+  CI_MERGE_REQUEST_SOURCE_BRANCH_NAME: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+  CI_COMMIT_BRANCH: "$CI_COMMIT_BRANCH"
+  CI_MERGE_REQUEST_IID: "$CI_MERGE_REQUEST_IID"
+  CI_PROJECT_VISIBILITY: "$CI_PROJECT_VISIBILITY"
+  GITLAB_ACCESS_TOKEN: ""
+  GITLAB_USER_LOGIN: "$GITLAB_USER_LOGIN"
+  
+  # Codethreat specific variables
+  CT_BASE_URL: "" # SAST Center base URL
+  CT_TOKEN: ""    # USER API token
+  CT_ORGANIZATION: "" # Organization Name
+  FAILED_ARGS: '{"max_number_of_critical":5,"max_number_of_high":4,"weakness_is":"*.injection.*","condition":"OR"}'
+  
+codethreat-sast-scan-mr:
+  stage: build
+  image:
+    name: codethreatdoc/codethreat-gitlab-job
+    entrypoint: ['npm', 'start']
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+
+codethreat-sast-scan-manual:
+  stage: build
+  image:
+    name: codethreatdoc/codethreat-gitlab-job
+    entrypoint: ['npm', 'start']
+  when: manual
+  allow_failure: true
