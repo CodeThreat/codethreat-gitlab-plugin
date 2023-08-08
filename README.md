@@ -11,7 +11,7 @@ You have two options to integrate this setup:
 
     ```
     include:
-      - 'https://raw.githubusercontent.com/codethreat/codethreat-gitlab-plugin/main/templates/codethreat.gitlab-ci.yml'
+      - 'https://raw.githubusercontent.com/CodeThreat/codethreat-gitlab-plugin/main/templates/codethreat.gitlab-ci.yaml'
     ```
 2.  **Manual Integration**: You can copy the provided YAML sections and paste them into your existing `.gitlab-ci.yml` file.
     
