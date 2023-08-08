@@ -16,7 +16,7 @@ variables:
   CT_ORGANIZATION: "" # Organization Name
   FAILED_ARGS: '{"max_number_of_critical":5,"max_number_of_high":4,"weakness_is":"*.injection.*","condition":"OR"}'
   
-codethreat-sast-scan-mr:
+codethreat-sast-scan:
   stage: build
   image:
     name: codethreatdoc/codethreat-gitlab-job
