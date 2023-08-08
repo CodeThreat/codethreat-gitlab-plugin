@@ -22,7 +22,7 @@ codethreat-sast-scan-mr:
     name: codethreatdoc/codethreat-gitlab-job
     entrypoint: ['']
   script:
-    - npm start
+    - cd /codethreat-sast-cli && npm start
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
@@ -36,6 +36,6 @@ codethreat-sast-scan-manual:
     name: codethreatdoc/codethreat-gitlab-job
     entrypoint: ['']
   script:
-    - npm start
+    - cd /codethreat-sast-cli && npm start
   when: manual
   allow_failure: true
