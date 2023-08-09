@@ -36,6 +36,10 @@ console.log("GitLab URL : ", gitlabBaseUrl);
 console.log("CodeThreat Organization : ", CT_ORGANIZATION);
 console.log("CodeThreat URL : ", CT_BASE_URL);
 
+console.log('MERGE REQUEST ID : ', MERGE_REQUEST_IID)
+console.log('CI COMMIT BRANCH : ', CI_COMMIT_BRANCH)
+console.log('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME : ', SOURCE_BRANCH_NAME)
+
 let authorizationToken, scanProcess, cancellation;
 
 const startScan = async () => {
@@ -67,6 +71,7 @@ const startScan = async () => {
         repoNameAndID: `${projectName}:${projectID}`,
         gitlabToken: gitlabPersonalAccessToken,
         action: true,
+        gitlabBaseURL: gitlabBaseUrl,
       },
       {
         headers: {
@@ -98,6 +103,7 @@ const startScan = async () => {
         gitlabToken: gitlabPersonalAccessToken,
         action: true,
         project_id: projectID,
+        gitlabBaseURL : gitlabBaseUrl,
       },
       {
         headers: {
@@ -319,6 +325,8 @@ const resultScan = async (riskS, started_at, ended_at, totalSeverities, sid) => 
       } catch (error) {
         console.log(error);
       }
+
+      console.log('HTML Created')
 
       const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/merge_requests/${MERGE_REQUEST_IID}/notes`;
 
