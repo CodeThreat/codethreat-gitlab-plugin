@@ -62,6 +62,18 @@ const startScan = async () => {
     authorizationToken = `Bearer ${CT_TOKEN}`;
   }
 
+  const body1 = {
+    type: visibility,
+    branch: CI_COMMIT_BRANCH ? CI_COMMIT_BRANCH : SOURCE_BRANCH_NAME,
+    account: gitlabUserName,
+    repoNameAndID: `${projectName}:${projectID}`,
+    gitlabToken: gitlabPersonalAccessToken,
+    action: true,
+    gitlabBaseURL: gitlabBaseUrl,
+  }
+
+  console.log('before gitlab/set body', JSON.stringify(body1));
+
   try {
     const checkAndCreateProject = await axios.post(
       `${CT_BASE_URL}/api/integration/gitlab/set`,
@@ -91,6 +103,19 @@ const startScan = async () => {
     console.log(error?.response?.data?.message)
     throw new Error(error?.message);
   }
+
+  const body2 = {
+    project_name: projectName,
+    branch: CI_COMMIT_BRANCH ? CI_COMMIT_BRANCH : SOURCE_BRANCH_NAME,
+    account: gitlabUserName,
+    type: visibility,
+    gitlabToken: gitlabPersonalAccessToken,
+    action: true,
+    project_id: projectID,
+    gitlabBaseURL : gitlabBaseUrl,
+  }
+
+  console.log('before plugins/gitlab body', JSON.stringify(body2))
 
   let scanStarting;
   try {
