@@ -39,6 +39,7 @@ console.log("CodeThreat URL : ", CT_BASE_URL);
 console.log('MERGE REQUEST ID : ', MERGE_REQUEST_IID)
 console.log('CI COMMIT BRANCH : ', CI_COMMIT_BRANCH)
 console.log('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME : ', SOURCE_BRANCH_NAME)
+console.log('PROJECT ID', projectID)
 
 let authorizationToken, scanProcess, cancellation;
 
