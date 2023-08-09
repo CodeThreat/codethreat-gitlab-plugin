@@ -20,12 +20,6 @@ You have two options to integrate this setup:
 
 ### GitLab Default Variables
 
--   `CI_PROJECT_ID`: GitLab Project ID.
--   `CI_PROJECT_NAME`: GitLab Project Name.
--   `CI_MERGE_REQUEST_SOURCE_BRANCH_NAME`: Source branch name for merge requests.
--   `CI_COMMIT_BRANCH`: Branch of the current commit.
--   `CI_MERGE_REQUEST_IID`: Merge request IID.
--   `CI_PROJECT_VISIBILITY`: GitLab project visibility (e.g., public, internal, private).
 -   `GITLAB_ACCESS_TOKEN`: Personal Access Token for GitLab.
 -   `GITLAB_BASE_URL`: Base url of your GitLab platform
 -   `GITLAB_USER_LOGIN`: GitLab user login name.
