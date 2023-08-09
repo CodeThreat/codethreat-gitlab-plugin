@@ -1,5 +1,5 @@
 FROM node:lts
-WORKDIR /app
+WORKDIR /codethreat-sast-cli
 COPY package*.json ./
 RUN npm install
 COPY . .
