@@ -17,7 +17,7 @@ variables:
   FAILED_ARGS: '{"max_number_of_critical":5,"max_number_of_high":4,"weakness_is":"*.injection.*","condition":"OR"}'
   
 codethreat-sast-scan:
-  stage: build
+  stage: sast-scan
   image:
     name: codethreatdoc/codethreat-gitlab-job
     entrypoint: ['']
@@ -31,7 +31,7 @@ codethreat-sast-scan:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
 
 codethreat-sast-scan-manual:
-  stage: build
+  stage: sast-scan
   image:
     name: codethreatdoc/codethreat-gitlab-job
     entrypoint: ['']
