@@ -14,6 +14,7 @@ const CT_PASSWORD = process.env.CT_PASSWORD;
 const CT_ORGANIZATION = process.env.CT_ORGANIZATION;
 const gitlabPersonalAccessToken = process.env.GITLAB_ACCESS_TOKEN;
 const gitlabUserName = process.env.GITLAB_USER_LOGIN;
+const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA;
 let gitlabBaseUrl = process.env.GITLAB_BASE_URL;
 
 const {
@@ -62,18 +63,6 @@ const startScan = async () => {
     authorizationToken = `Bearer ${CT_TOKEN}`;
   }
 
-  const body1 = {
-    type: visibility,
-    branch: CI_COMMIT_BRANCH ? CI_COMMIT_BRANCH : SOURCE_BRANCH_NAME,
-    account: gitlabUserName,
-    repoNameAndID: `${projectName}:${projectID}`,
-    gitlabToken: gitlabPersonalAccessToken,
-    action: true,
-    gitlabBaseURL: gitlabBaseUrl,
-  }
-
-  console.log('before gitlab/set body', JSON.stringify(body1));
-
   try {
     const checkAndCreateProject = await axios.post(
       `${CT_BASE_URL}/api/integration/gitlab/set`,
@@ -103,19 +92,6 @@ const startScan = async () => {
     console.log(error?.response?.data?.message)
     throw new Error(error?.message);
   }
-
-  const body2 = {
-    project_name: projectName,
-    branch: CI_COMMIT_BRANCH ? CI_COMMIT_BRANCH : SOURCE_BRANCH_NAME,
-    account: gitlabUserName,
-    type: visibility,
-    gitlabToken: gitlabPersonalAccessToken,
-    action: true,
-    project_id: projectID,
-    gitlabBaseURL : gitlabBaseUrl,
-  }
-
-  console.log('before plugins/gitlab body', JSON.stringify(body2))
 
   let scanStarting;
   try {
@@ -296,7 +272,7 @@ const resultScan = async (riskS, started_at, ended_at, totalSeverities, sid) => 
         "\n"
     );
 
-    if (MERGE_REQUEST_IID) {
+    if (MERGE_REQUEST_IID || CI_COMMIT_SHA) {
       console.log("Report Creating ...");
 
       let newIssues, allIssues, html;
@@ -352,8 +328,28 @@ const resultScan = async (riskS, started_at, ended_at, totalSeverities, sid) => 
         console.log(error);
       }
 
-      console.log('HTML Created')
+      console.log('Report Created')
 
+      const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/repository/commits/${CI_COMMIT_SHA}/comments`;
+
+      const headers = {
+        "Content-Type": "application/json",
+        "PRIVATE-TOKEN": gitlabPersonalAccessToken,
+      };
+
+      try {
+        const response = await axios.post(apiUrl, { note: html }, { headers });
+      } catch (error) {
+        console.log(error.message);
+        throw new Error(error?.message);
+      }
+
+      console.log(
+        "The scan results have been added as a comment to the commits."
+      );
+      
+
+      if(MERGE_REQUEST_IID){
       const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/merge_requests/${MERGE_REQUEST_IID}/notes`;
 
       const headers = {
@@ -371,6 +367,7 @@ const resultScan = async (riskS, started_at, ended_at, totalSeverities, sid) => 
       console.log(
         "The scan results have been added as a comment to the merge request."
       );
+      }
     }
   } catch (error) {
     console.log(error?.response?.data?.message)
