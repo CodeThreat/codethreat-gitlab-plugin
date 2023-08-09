@@ -14,7 +14,7 @@ variables:
   CT_BASE_URL: "" # SAST Center base URL
   CT_TOKEN: ""    # USER API token
   CT_ORGANIZATION: "" # Organization Name
-  FAILED_ARGS: '{"max_number_of_critical":5,"max_number_of_high":4,"weakness_is":"*.injection.*","condition":"OR"}'
+  FAILED_ARGS: '{"max_number_of_critical":5,"max_number_of_high":4,"weakness_is":"*.injection","condition":"OR"}'
   
 codethreat-sast-scan:
   stage: sast-scan
