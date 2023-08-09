@@ -50,6 +50,7 @@ const startScan = async () => {
       if (authorizationToken.status === 200)
         authorizationToken = `Bearer ${authorizationToken.data.access_token}`;
     } catch (error) {
+      console.log(error?.response?.data?.message)
       throw new Error(error?.message);
     }
   } else if (CT_TOKEN) {
@@ -81,6 +82,7 @@ const startScan = async () => {
       console.log("Preparing to scan...");
     }
   } catch (error) {
+    console.log(error?.response?.data?.message)
     throw new Error(error?.message);
   }
 
@@ -105,6 +107,7 @@ const startScan = async () => {
       }
     );
   } catch (error) {
+    console.log(error?.response?.data?.message)
     throw new Error(error?.message);
   }
   return scanStarting;
@@ -221,6 +224,7 @@ const awaitScan = async (sid) => {
       }, 10000);
     }
   } catch (error) {
+    console.log(error?.response?.data?.message)
     throw new Error(error?.message);
   }
 };
@@ -335,6 +339,7 @@ const resultScan = async (riskS, started_at, ended_at, totalSeverities, sid) => 
       );
     }
   } catch (error) {
+    console.log(error?.response?.data?.message)
     throw new Error(error?.message);
   }
 };
