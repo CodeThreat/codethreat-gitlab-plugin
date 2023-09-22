@@ -106,7 +106,7 @@ const startScan = async () => {
         type: visibility,
         gitlabToken: gitlabPersonalAccessToken,
         action: true,
-        project_id: projectID,
+        projectId: projectID,
         gitlabBaseURL : gitlabBaseUrl,
         commitId: CI_COMMIT_SHA,
         commitAuthor: CI_COMMIT_AUTHOR,
