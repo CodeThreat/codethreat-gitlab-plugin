@@ -15,6 +15,8 @@ const CT_ORGANIZATION = process.env.CT_ORGANIZATION;
 const gitlabPersonalAccessToken = process.env.GITLAB_ACCESS_TOKEN;
 const gitlabUserName = process.env.GITLAB_USER_LOGIN;
 const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA;
+const CI_COMMIT_MESSAGE = process.env.CI_COMMIT_MESSAGE;
+const CI_COMMIT_AUTHOR = process.env.CI_COMMIT_AUTHOR;
 let gitlabBaseUrl = process.env.GITLAB_BASE_URL;
 
 const {
@@ -106,6 +108,10 @@ const startScan = async () => {
         action: true,
         project_id: projectID,
         gitlabBaseURL : gitlabBaseUrl,
+        commitId: CI_COMMIT_SHA,
+        commitAuthor: CI_COMMIT_AUTHOR,
+        commitMessage: CI_COMMIT_MESSAGE
+        
       },
       {
         headers: {

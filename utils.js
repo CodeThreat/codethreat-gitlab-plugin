@@ -167,23 +167,23 @@ const htmlCode = (
 
   const total = Object.values(totalSeverities).reduce((a, b) => a + b, 0);
 
-  table += `<tr><td><em>🔴 Critical</em></td><td>${
+  table += `<tr><td>Critical</td><td>${
     totalSeverities?.critical ? totalSeverities?.critical : 0
   }</td><td>${newIssuesSeverity.critical}</td></tr>`;
 
-  table += `<tr><td><em>🟠 High</em></td><td>${
+  table += `<tr><td>High</td><td>${
     totalSeverities?.high ? totalSeverities?.high : 0
   }</td><td>${newIssuesSeverity.high}</td></tr>`;
 
-  table += `<tr><td><em>🟡 Medium</em></td><td>${
+  table += `<tr><td>Medium</td><td>${
     totalSeverities?.medium ? totalSeverities?.medium : 0
   }</td><td>${newIssuesSeverity.medium}</td></tr>`;
 
-  table += `<tr><td><em>🔵 Low</em></td><td>${
+  table += `<tr><td>Low</td><td>${
     totalSeverities?.low ? totalSeverities?.low : 0
   }</td><td>${newIssuesSeverity.low}</td></tr>`;
 
-  table += `<tr><td><em>🔘 TOTAL </em></td><td>${total}</td><td>${totalCountNewIssue}</td></tr>`;
+  table += `<tr><td>TOTAL </td><td>${total}</td><td>${totalCountNewIssue}</td></tr>`;
 
   table += "</table>";
 
