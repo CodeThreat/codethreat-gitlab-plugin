@@ -110,8 +110,8 @@ const startScan = async () => {
         gitlabBaseURL : gitlabBaseUrl,
         commitId: CI_COMMIT_SHA,
         commitAuthor: CI_COMMIT_AUTHOR,
-        commitMessage: CI_COMMIT_MESSAGE
-        
+        commitMessage: CI_COMMIT_MESSAGE,
+        project_id: projectID
       },
       {
         headers: {
