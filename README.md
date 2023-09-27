@@ -40,6 +40,8 @@ FAILED_ARGS: '{
 "condition":"OR"}'
 ``` 
 
+- The values ​​in FAILED_ARGS are not required. If you do not want to enter these values, set `FAILED_ARGS: '{}'` under variables in your yaml file.
+
 ## Scan Types
 
 1.  **Automated Scans (`codethreat-sast-scan`)**:
