@@ -30,9 +30,10 @@ const {
   allIssue,
 } = require("./utils");
 
-const failedArgs = JSON.parse(process.env.FAILED_ARGS);
+const failedArgs = JSON.parse(process.env.FAILED_ARGS) || {};
 if (failedArgs.automerge === undefined) failedArgs.automerge = false;
 if (failedArgs.condition === undefined) failedArgs.condition = "AND";
+if (failedArgs.weakness_is === undefined) failedArgs.weakness_is = "";
 if (!gitlabBaseUrl) gitlabBaseUrl = "https://gitlab.com";
 
 console.log("GitLab URL : ", gitlabBaseUrl);
@@ -176,8 +177,8 @@ const awaitScan = async (sid) => {
         CT_BASE_URL,
         CT_ORGANIZATION
       );
-      const weaknessIsKeywords = failedArgs.weakness_is.split(",");
-      const weaknessIsCount = findWeaknessTitles(newIssues, weaknessIsKeywords);
+      const weaknessIsKeywords = failedArgs?.weakness_is?.split(",");
+      const weaknessIsCount = findWeaknessTitles(newIssues, weaknessIsKeywords) || 0;
 
       if (failedArgs.condition === "OR") {
         if (
