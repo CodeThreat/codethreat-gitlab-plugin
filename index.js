@@ -3,15 +3,16 @@ const axios = require("axios");
 const projectName = process.env.CI_PROJECT_NAME;
 const projectID = process.env.CI_PROJECT_ID;
 const SOURCE_BRANCH_NAME = process.env.CI_MERGE_REQUEST_SOURCE_BRANCH_NAME;
-const TARGET_BRANCH_NAME = process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME;
 const MERGE_REQUEST_IID = process.env.CI_MERGE_REQUEST_IID;
 const CI_COMMIT_BRANCH = process.env.CI_COMMIT_BRANCH;
 const visibility = process.env.CI_PROJECT_VISIBILITY;
+
 const CT_TOKEN = process.env.CT_TOKEN;
 let CT_BASE_URL = process.env.CT_BASE_URL;
 const CT_USERNAME = process.env.CT_USERNAME;
 const CT_PASSWORD = process.env.CT_PASSWORD;
 const CT_ORGANIZATION = process.env.CT_ORGANIZATION;
+
 const gitlabPersonalAccessToken = process.env.GITLAB_ACCESS_TOKEN;
 const gitlabUserName = process.env.GITLAB_USER_LOGIN;
 const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA;
@@ -19,370 +20,231 @@ const CI_COMMIT_MESSAGE = process.env.CI_COMMIT_MESSAGE;
 const CI_COMMIT_AUTHOR = process.env.CI_COMMIT_AUTHOR;
 let gitlabBaseUrl = process.env.GITLAB_BASE_URL;
 
+let branch = CI_COMMIT_BRANCH;
+
+if(MERGE_REQUEST_IID){
+  branch = SOURCE_BRANCH_NAME;
+}
+
 const {
-  countAndGroupByTitle,
-  convertToHHMMSS,
-  getScore,
-  countBySeverity,
-  htmlCode,
   findWeaknessTitles,
-  newIssue,
-  allIssue,
+  login,
+  check,
+  create,
+  start,
+  status,
+  result
 } = require("./utils");
 
 const failedArgs = JSON.parse(process.env.FAILED_ARGS) || {};
 if (failedArgs.automerge === undefined) failedArgs.automerge = false;
 if (failedArgs.condition === undefined) failedArgs.condition = "AND";
 if (failedArgs.weakness_is === undefined) failedArgs.weakness_is = "";
+if (failedArgs.sync_scan === undefined) failedArgs.sync_scan = true;
 if (!gitlabBaseUrl) gitlabBaseUrl = "https://gitlab.com";
 
-console.log("GitLab URL : ", gitlabBaseUrl);
-console.log("CodeThreat Organization : ", CT_ORGANIZATION);
-console.log("CodeThreat URL : ", CT_BASE_URL);
+console.log("------------------------------")
+console.log("CodeThreat Server: " + CT_BASE_URL);
+console.log("User: " + gitlabUserName);
+console.log("Project: " + projectName);
+console.log("Organization: " + CT_ORGANIZATION)
+console.log("------------------------------")
 
-console.log('MERGE REQUEST ID : ', MERGE_REQUEST_IID)
-console.log('CI COMMIT BRANCH : ', CI_COMMIT_BRANCH)
-console.log('CI_MERGE_REQUEST_SOURCE_BRANCH_NAME : ', SOURCE_BRANCH_NAME)
-console.log('PROJECT ID', projectID)
+let authToken, checked, scanProcess, cancellation;
 
-let authorizationToken, scanProcess, cancellation;
-
-const startScan = async () => {
-  if (!CT_TOKEN && !CT_USERNAME && !CT_PASSWORD) {
-    console.log("Required CT_TOKEN or CT_USERNAME and CT_PASSWORD");
-  } else if (!CT_TOKEN && CT_USERNAME && CT_PASSWORD) {
-    try {
-      authorizationToken = await axios.post(`${CT_BASE_URL}/api/signin`, {
-        client_id: CT_USERNAME,
-        client_secret: CT_PASSWORD,
-      });
-      if (authorizationToken.status === 200)
-        authorizationToken = `Bearer ${authorizationToken.data.access_token}`;
-    } catch (error) {
-      console.log(error?.response?.data?.message)
-      throw new Error(error?.message);
-    }
-  } else if (CT_TOKEN) {
-    authorizationToken = `Bearer ${CT_TOKEN}`;
+const loginIn = async () => {
+  if (CT_TOKEN && (!CT_USERNAME || !CT_PASSWORD)) {
+    authToken = CT_TOKEN;
+  } else if (CT_USERNAME && CT_PASSWORD) {
+    authToken = await login(CT_BASE_URL, CT_USERNAME, CT_PASSWORD);
+  } else {
+    console.log("Please enter username and password or token.");
+    throw new Error("Please enter username and password or token.")
   }
-
-  try {
-    const checkAndCreateProject = await axios.post(
-      `${CT_BASE_URL}/api/integration/gitlab/set`,
-      {
-        type: visibility,
-        branch: CI_COMMIT_BRANCH ? CI_COMMIT_BRANCH : SOURCE_BRANCH_NAME,
-        account: gitlabUserName,
-        repoNameAndID: `${projectName}:${projectID}`,
-        gitlabToken: gitlabPersonalAccessToken,
-        action: true,
-        gitlabBaseURL: gitlabBaseUrl,
-      },
-      {
-        headers: {
-          Authorization: authorizationToken, //authorizationToken
-          "x-ct-organization": CT_ORGANIZATION,
-        },
-      }
-    );
-
-    if (checkAndCreateProject.status === 201) {
-      console.log("Project created succesfully.");
-    } else if (checkAndCreateProject.status === 200) {
-      console.log("Preparing to scan...");
-    }
-  } catch (error) {
-    console.log(error?.response?.data?.message)
-    throw new Error(error?.message);
-  }
-
-  let scanStarting;
-  try {
-    scanStarting = await axios.post(
-      `${CT_BASE_URL}/api/plugins/gitlab`,
-      {
-        project_name: projectName,
-        branch: CI_COMMIT_BRANCH ? CI_COMMIT_BRANCH : SOURCE_BRANCH_NAME,
-        account: gitlabUserName,
-        type: visibility,
-        gitlabToken: gitlabPersonalAccessToken,
-        action: true,
-        projectId: projectID,
-        gitlabBaseURL : gitlabBaseUrl,
-        commitId: CI_COMMIT_SHA,
-        commitAuthor: CI_COMMIT_AUTHOR,
-        commitMessage: CI_COMMIT_MESSAGE,
-        project_id: projectID
-      },
-      {
-        headers: {
-          Authorization: authorizationToken,
-          "x-ct-organization": CT_ORGANIZATION,
-        },
-      }
-    );
-  } catch (error) {
-    console.log(error?.response?.data?.message)
-    throw new Error(error?.message);
-  }
-  return scanStarting;
 };
 
-let progressData = [];
-let progressSeverity = [];
+const checkProject = async () => {
+  return await check(CT_BASE_URL, projectName, authToken, CT_ORGANIZATION);
+};
 
-const awaitScan = async (sid) => {
+const createProject = async () => {
+  const repoNameAndID = `${projectName}:${projectID}`;
+  return await create(
+    CT_BASE_URL,
+    projectName,
+    branch,
+    gitlabUserName,
+    visibility,
+    gitlabPersonalAccessToken,
+    authToken,
+    CT_ORGANIZATION,
+    repoNameAndID,
+  );
+};
+
+const startScan = async () => {
+  return await start(
+    CT_BASE_URL,
+    projectName,
+    branch,
+    gitlabUserName,
+    visibility,
+    gitlabPersonalAccessToken,
+    projectID,
+    CI_COMMIT_SHA,
+    CI_COMMIT_AUTHOR,
+    CI_COMMIT_MESSAGE,
+    authToken,
+    CT_ORGANIZATION
+  );
+};
+
+const scanStatus = async (sid) => {
   try {
-    scanProcess = await axios.get(`${CT_BASE_URL}/api/scan/status/${sid}`, {
-      headers: {
-        Authorization: authorizationToken,
-        "x-ct-organization": CT_ORGANIZATION,
-      },
-    });
-    progressData.push(scanProcess.data.progress_data.progress);
-    progressSeverity.push(scanProcess.data.severities);
-    if (scanProcess.data.state !== "end") {
-      console.log(`Scanning... `);
-      progressSeverity[progressSeverity.length - 1].critical
-        ? progressSeverity[progressSeverity.length - 1].critical
-        : (progressSeverity[progressSeverity.length - 1].critical = 0);
-      progressSeverity[progressSeverity.length - 1].high
-        ? progressSeverity[progressSeverity.length - 1].high
-        : (progressSeverity[progressSeverity.length - 1].high = 0);
-      progressSeverity[progressSeverity.length - 1].medium
-        ? progressSeverity[progressSeverity.length - 1].medium
-        : (progressSeverity[progressSeverity.length - 1].medium = 0);
-      progressSeverity[progressSeverity.length - 1].low
-        ? progressSeverity[progressSeverity.length - 1].low
-        : (progressSeverity[progressSeverity.length - 1].low = 0);
+    scanProcess = await status(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
+    if (scanProcess.state === "failure") {
+      console.log("Scan Failed.");
+      throw new Error("Scan Failed.");
+    }
+    if(!failedArgs.sync_scan){
+      console.log("Scan started successfuly.")
+      return;
+    }
+    if (scanProcess.state !== "end") {
       console.log(
-        "\n" +
-          "Critical : " +
-          progressSeverity[progressSeverity.length - 1].critical +
-          "\n" +
-          "High : " +
-          progressSeverity[progressSeverity.length - 1].high +
-          "\n" +
-          "Medium : " +
-          progressSeverity[progressSeverity.length - 1].medium +
-          "\n" +
-          "Low : " +
-          progressSeverity[progressSeverity.length - 1].low +
-          "\n"
-      );
+        "Scanning... " +
+          "%" +
+          scanProcess.progress +
+          " - Critical : " +
+          scanProcess.severities.critical +
+          " High : " +
+          scanProcess.severities.high +
+          " Medium : " +
+          scanProcess.severities.medium +
+          " Low : " +
+          scanProcess.severities.low);
 
-      const newIssues = await newIssue(
-        projectName,
-        authorizationToken,
-        CT_BASE_URL,
-        CT_ORGANIZATION
+      const weaknessIsCount = findWeaknessTitles(
+        scanProcess.weaknessesArr,
+        failedArgs.weakness_is.split(",")
       );
-      const weaknessIsKeywords = failedArgs?.weakness_is?.split(",");
-      const weaknessIsCount = findWeaknessTitles(newIssues, weaknessIsKeywords) || 0;
 
       if (failedArgs.condition === "OR") {
         if (
           failedArgs.max_number_of_critical &&
-          failedArgs.max_number_of_critical <
-            progressSeverity[progressSeverity.length - 1].critical
+          failedArgs.max_number_of_critical < scanProcess.severities.critical
         ) {
-          console.log("!! FAILED_ARGS : Critical limit exceeded -- ");
-          scanProcess.data.state === "end";
-          cancellation = true;
-          process.exit(1);
+          console.log("!! FAILED_ARGS : Critical limit exceeded.");
+          throw new Error(
+            "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+          );
         } else if (
           failedArgs.max_number_of_critical &&
-          failedArgs.max_number_of_high <
-            progressSeverity[progressSeverity.length - 1].high
+          failedArgs.max_number_of_high < scanProcess.severities.high
         ) {
-          console.log("!! FAILED_ARGS : High limit exceeded -- ");
-          scanProcess.data.state === "end";
-          cancellation = true;
-          process.exit(1);
+          console.log("!! FAILED_ARGS : High limit exceeded. ");
+          throw new Error(
+            "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+          );
         } else if (weaknessIsCount.length > 0) {
           console.log(
             "!! FAILED_ARGS : Weaknesses entered in the weakness_is key were found during the scan."
           );
-          scanProcess.data.state === "end";
-          process.exit(1);
+          scanProcess.state === "end";
         }
       } else if (failedArgs.condition === "AND") {
         if (
           (failedArgs.max_number_of_critical &&
-            failedArgs.max_number_of_critical <
-              progressSeverity[progressSeverity.length - 1].critical) ||
+            failedArgs.max_number_of_critical < scanProcess.severities.critical) ||
           (failedArgs.max_number_of_critical &&
-            failedArgs.max_number_of_high <
-              progressSeverity[progressSeverity.length - 1].high) ||
+            failedArgs.max_number_of_high < scanProcess.severities.high) ||
           weaknessIsCount.length > 0
         ) {
           console.log(
-            "!! FAILED ARGS : Not all conditions are met according to the given arguments"
+            "!! FAILED ARGS : Not all conditions are met according to the given arguments."
           );
-          scanProcess.data.state === "end";
-          cancellation = true;
-          process.exit(1);
+          throw new Error(
+            "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+          );
         }
       }
     }
-    if (scanProcess.data.state === "end" || cancellation) {
+    if (scanProcess.state === "end") {
       await resultScan(
-        scanProcess.data.riskscore,
-        scanProcess.data.started_at,
-        scanProcess.data.ended_at,
-        scanProcess.data.severities,
-        sid
+        scanProcess.progress,
+        scanProcess.severities,
+        sid,
+        scanProcess.riskscore,
+        scanProcess.started_at,
+        scanProcess.ended_at
       );
     } else {
       setTimeout(function () {
-        awaitScan(sid);
-      }, 10000);
+        scanStatus(sid);
+      }, 5000);
     }
   } catch (error) {
-    console.log(error?.response?.data?.message)
-    throw new Error(error?.message);
+    console.log(error.message);
   }
 };
-const resultScan = async (riskS, started_at, ended_at, totalSeverities, sid) => {
-  try {
-    let reason;
-    if (!cancellation) {
-      reason = `Scan Completed... %${progressData[progressData.length - 1]}`;
-    } else {
-      reason =
-        "Pipeline interrupted because the FAILED_ARGS arguments you entered were found... ";
-    }
 
-    let totalSev = {
-      critical: totalSeverities.critical ? totalSeverities.critical : 0,
-      high: totalSeverities.high ? totalSeverities.high : 0,
-      medium: totalSeverities.medium ? totalSeverities.medium : 0,
-      low: totalSeverities.low ? totalSeverities.low : 0,
+const resultScan = async (progress, severities, sid) => {
+  const reason = `Scan Completed... %${progress}`;
+  console.log(
+    "Result : " +
+      reason +
+      "- Critical : " +
+      severities.critical +
+      " High : " +
+      severities.high +
+      " Medium : " +
+      severities.medium +
+      " Low : " +
+      severities.low
+  );
+  const report = await result(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
+  console.log("Report Created")
+
+  if(!MERGE_REQUEST_IID) {
+    const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/repository/commits/${CI_COMMIT_SHA}/comments`;
+    const headers = {
+      "Content-Type": "application/json",
+      "PRIVATE-TOKEN": gitlabPersonalAccessToken,
     };
 
-    console.log(
-      "\n" +
-        "Result : " +
-        reason +
-        "\n" +
-        "Critical : " +
-        totalSev.critical +
-        "\n" +
-        "High : " +
-        totalSev.high +
-        "\n" +
-        "Medium : " +
-        totalSev.medium +
-        "\n" +
-        "Low : " +
-        totalSev.low +
-        "\n"
-    );
-
-    if (MERGE_REQUEST_IID || CI_COMMIT_SHA) {
-      console.log("Report Creating ...");
-
-      let newIssues, allIssues, html;
-      try {
-        newIssues = await newIssue(
-          projectName,
-          authorizationToken,
-          CT_BASE_URL,
-          CT_ORGANIZATION
-        );
-      } catch (error) {
-        console.log(error);
-      }
-
-      try {
-        allIssues = await allIssue(
-          projectName,
-          authorizationToken,
-          CT_BASE_URL,
-          CT_ORGANIZATION
-        );
-      } catch (error) {
-        console.log(error);
-      }
-
-      let durationTime = convertToHHMMSS(ended_at, started_at);
-      const riskscore = getScore(riskS);
-
-      const newIssuesData = countAndGroupByTitle(newIssues);
-      const newIssuesSeverity = countBySeverity(newIssuesData);
-      const allIssuesData = countAndGroupByTitle(allIssues);
-      const allIssuesSeverity = countBySeverity(allIssuesData);
-
-      let totalCountNewIssues = 0;
-      for (const obj of newIssuesData) {
-        totalCountNewIssues += obj.count;
-      }
-
-      try {
-        html = htmlCode(
-          totalCountNewIssues,
-          newIssuesSeverity,
-          allIssuesData,
-          durationTime,
-          riskS,
-          riskscore,
-          totalSeverities,
-          projectName,
-          CT_BASE_URL,
-          sid
-        );
-      } catch (error) {
-        console.log(error);
-      }
-
-      console.log('Report Created')
-
-      const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/repository/commits/${CI_COMMIT_SHA}/comments`;
-
-      const headers = {
-        "Content-Type": "application/json",
-        "PRIVATE-TOKEN": gitlabPersonalAccessToken,
-      };
-
-      try {
-        const response = await axios.post(apiUrl, { note: html }, { headers });
-      } catch (error) {
-        console.log(error.message);
-        throw new Error(error?.message);
-      }
-
-      console.log(
-        "The scan results have been added as a comment to the commits."
-      );
-      
-
-      if(MERGE_REQUEST_IID){
-      const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/merge_requests/${MERGE_REQUEST_IID}/notes`;
-
-      const headers = {
-        "Content-Type": "application/json",
-        "PRIVATE-TOKEN": gitlabPersonalAccessToken,
-      };
-
-      try {
-        const response = await axios.post(apiUrl, { body: html }, { headers });
-      } catch (error) {
-        console.log(error.message);
-        throw new Error(error?.message);
-      }
-
-      console.log(
-        "The scan results have been added as a comment to the merge request."
-      );
-      }
+    try {
+      await axios.post(apiUrl, { note: report }, { headers });
+      console.log("The scan results have been added as a comment to the commits");
+    } catch (error) {
+      console.log("The scan was completed, but the report could not be sent as a comment.")
+      console.log(error.message);
     }
-  } catch (error) {
-    console.log(error?.response?.data?.message)
-    throw new Error(error?.message);
+  } else if (MERGE_REQUEST_IID) {
+    const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/merge_requests/${MERGE_REQUEST_IID}/notes`;
+    const headers = {
+      "Content-Type": "application/json",
+      "PRIVATE-TOKEN": gitlabPersonalAccessToken,
+    };
+
+    try {
+      await axios.post(apiUrl, { body: report }, { headers });
+      console.log("The scan results have been added as a comment to the merge request.");
+    } catch (error) {
+      console.log("The scan was completed, but the report could not be sent as a comment.")
+      console.log(error.message);
+    }
   }
-};
+}
 
 (async () => {
-  const start = await startScan();
-  await awaitScan(start.data.scan_id);
+  let start;
+  try {
+    await loginIn();
+    checked = await checkProject();
+    if (checked.type === null) await createProject();
+    start = await startScan();
+    await scanStatus(start.data.scan_id);
+  } catch (error) {
+    throw new Error(error);
+  }
 })();

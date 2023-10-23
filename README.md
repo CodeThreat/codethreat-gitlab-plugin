@@ -37,7 +37,9 @@ FAILED_ARGS: '{
 "max_number_of_critical":5,
 "max_number_of_high":4,
 "weakness_is":"*.injection.*",
-"condition":"OR"}'
+"condition":"OR"
+"sync_scan":true
+}'
 ``` 
 
 - The values ​​in FAILED_ARGS are not required. If you do not want to enter these values, set `FAILED_ARGS: '{}'` under variables in your yaml file.
