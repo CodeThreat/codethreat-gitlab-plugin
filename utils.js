@@ -9,19 +9,22 @@ let severities = {
   low: 0,
 };
 
-const findWeaknessTitles = (arr, keywords) => {
-  const regexArray = keywords.map((str) => new RegExp(str));
+const findWeaknessTitles = (weaknessArray, keywords) => {
+  const sanitizedKeywords = [];
 
-  let failedWeaknesss = [];
-
-  arr.forEach((element) => {
-    const found = regexArray.find((r) => {
-      return r.test(element.issue_state.weakness_id);
-    });
-    if (found) failedWeaknesss.push(element);
+  keywords.forEach((keyword) => {
+    const sanitizedKeyword = keyword.replace(/[^a-zA-Z0-9.,]/g, "");
+    if (sanitizedKeyword) {
+      sanitizedKeywords.push(sanitizedKeyword);
+    }
   });
 
-  return failedWeaknesss;
+  const safeRegexPattern = new RegExp(sanitizedKeywords.join("|"), "i");
+  const found = weaknessArray.filter((weakness) =>
+    safeRegexPattern.test(weakness)
+  );
+
+  return found;
 };
 
 const failedArgs = (failedArgsParsed) => {
@@ -177,6 +180,7 @@ const status = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
       headers: {
         Authorization: authToken,
         "x-ct-organization": CT_ORGANIZATION,
+        "plugin": true,
       },
     });
   } catch (error) {

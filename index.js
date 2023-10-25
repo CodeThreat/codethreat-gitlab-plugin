@@ -124,10 +124,15 @@ const scanStatus = async (sid) => {
           " Low : " +
           scanProcess.severities.low);
 
-      const weaknessIsCount = findWeaknessTitles(
-        scanProcess.weaknessesArr,
-        failedArgs.weakness_is.split(",")
-      );
+      const weaknessArray = [...new Set(scanProcess.weaknessesArr)];   
+
+      let weaknessIsCount;
+      if(failedArgs.weakness_is !== ""){
+        const keywords = failedArgs.weakness_is.split(",");
+        weaknessIsCount = findWeaknessTitles(weaknessArray, keywords);
+      } else {
+        weaknessIsCount = [];
+      }
 
       if (failedArgs.condition === "OR") {
         if (
@@ -150,7 +155,9 @@ const scanStatus = async (sid) => {
           console.log(
             "!! FAILED_ARGS : Weaknesses entered in the weakness_is key were found during the scan."
           );
-          scanProcess.state === "end";
+          throw new Error(
+            "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+          );
         }
       } else if (failedArgs.condition === "AND") {
         if (
