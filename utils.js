@@ -78,7 +78,7 @@ const check = async (CT_BASE_URL, projectName, authToken, CT_ORGANIZATION) => {
       },
     });
   } catch (error) {
-    if (error.response.data.code === 400) {
+    if (error.response.data.code === 400 || error.response.data.code === 404) {
       return {
         type: null,
       };
