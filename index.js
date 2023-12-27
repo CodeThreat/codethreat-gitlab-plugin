@@ -50,6 +50,17 @@ console.log("Project: " + projectName);
 console.log("Organization: " + CT_ORGANIZATION)
 console.log("------------------------------")
 
+if(!gitlabPersonalAccessToken){
+  console.log("Please enter GITLAB_ACCESS_TOKEN");
+  throw new Error("Please enter GITLAB_ACCESS_TOKEN")
+}
+
+console.log("------------------------------")
+console.log('Commit Author ---> ', CI_COMMIT_AUTHOR);
+console.log('Commit Message ---> ', CI_COMMIT_MESSAGE);
+console.log('Commit ID ---> ', CI_COMMIT_SHA);
+console.log("------------------------------")
+
 let authToken, checked, scanProcess, cancellation;
 
 const loginIn = async () => {
