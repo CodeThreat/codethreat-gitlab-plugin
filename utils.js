@@ -142,6 +142,7 @@ const start = async (
   committer,
   commitMessage,
   authToken,
+  policyName,
   CT_ORGANIZATION
 ) => {
   let scanStart;
@@ -159,6 +160,7 @@ const start = async (
         commitMessage,
         type,
         gitlabToken: gitlabPersonalAccessToken,
+        policy_id: policyName,
       },
       {
         headers: {

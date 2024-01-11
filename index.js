@@ -41,6 +41,7 @@ if (failedArgs.automerge === undefined) failedArgs.automerge = false;
 if (failedArgs.condition === undefined) failedArgs.condition = "AND";
 if (failedArgs.weakness_is === undefined) failedArgs.weakness_is = "";
 if (failedArgs.sync_scan === undefined) failedArgs.sync_scan = true;
+if (failedArgs.policy_name === undefined) failedArgs.policy_name = 'Advanced Security';
 if (!gitlabBaseUrl) gitlabBaseUrl = "https://gitlab.com";
 
 console.log("------------------------------")
@@ -106,6 +107,7 @@ const startScan = async () => {
     CI_COMMIT_AUTHOR,
     CI_COMMIT_MESSAGE,
     authToken,
+    failedArgs.policy_name,
     CT_ORGANIZATION
   );
 };
