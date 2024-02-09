@@ -1,4 +1,5 @@
 const axios = require("axios");
+const fs = require('fs').promises;
 
 const projectName = process.env.CI_PROJECT_NAME;
 const projectID = process.env.CI_PROJECT_ID;
@@ -33,7 +34,8 @@ const {
   create,
   start,
   status,
-  result
+  result,
+  saveSarif
 } = require("./utils");
 
 const failedArgs = JSON.parse(process.env.FAILED_ARGS) || {};
@@ -223,8 +225,13 @@ const resultScan = async (progress, severities, sid) => {
       severities.low
   );
   const report = await result(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
-  console.log("Report Created")
-
+  console.log("Report Created")   
+  try {
+    await saveSarif(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
+  } catch (error) {
+    console.log("sarif report generation failed: " + error.message)
+  }
+    
   if(!MERGE_REQUEST_IID) {
     const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/repository/commits/${CI_COMMIT_SHA}/comments`;
     const headers = {

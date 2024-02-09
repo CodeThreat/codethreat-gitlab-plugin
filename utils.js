@@ -218,6 +218,27 @@ const result = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
   return resultScan.data.report;
 }
 
+const saveSarif = async (ctServer, sid, authToken, orgname) => {
+  try {
+    const response = await axios.get(`${ctServer}/api/report/scan/create?sid=${sid}&reportType=sarif`, {
+      headers: {
+        Authorization: authToken,
+        "x-ct-organization": orgname,
+        "x-ct-from": 'gitlab'
+      },
+    });
+
+    const sarifData = JSON.stringify(response.data.parsedResult);
+
+    const artifactPath = 'codethreat.sarif';
+    await fs.writeFile(artifactPath, sarifData);
+
+    console.log(`SARIF report saved to ${artifactPath}`);
+  } catch (error) {
+    throw new Error(`Failed to save SARIF report: ${error.response?.data?.message || error.message}`);
+  }
+};
+
 
 module.exports = {
   findWeaknessTitles,
@@ -227,5 +248,6 @@ module.exports = {
   create,
   start,
   status,
-  result
+  result,
+  saveSarif
 };
