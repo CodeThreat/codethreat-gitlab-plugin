@@ -39,7 +39,9 @@ FAILED_ARGS: '{
 "weakness_is":"*.injection.*",
 "condition":"OR"
 "sync_scan":true,
-"policy_name":"Advanced Security":
+"policy_name":"Advanced Security"
+"sca_max_number_of_critical":5,
+"sca_max_number_of_high":4,
 }'
 ``` 
 

@@ -101,7 +101,8 @@ const create = async (
   gitlabPersonalAccessToken,
   authToken,
   CT_ORGANIZATION,
-  repoNameAndID
+  repoNameAndID,
+  policyName
 ) => {
   let createProject;
   try {
@@ -215,7 +216,7 @@ const result = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
   } catch (error) {
     throw new Error(error.response.data.message);
   }
-  return resultScan.data.report;
+  return {report: resultScan.data.report, scaSeverityCounts: resultScan.data.scaSeverityCounts};
 }
 
 const saveSarif = async (ctServer, sid, authToken, orgname) => {

@@ -93,6 +93,7 @@ const createProject = async () => {
     authToken,
     CT_ORGANIZATION,
     repoNameAndID,
+    failedArgs.policy_name
   );
 };
 
@@ -196,9 +197,7 @@ const scanStatus = async (sid) => {
         scanProcess.progress,
         scanProcess.severities,
         sid,
-        scanProcess.riskscore,
-        scanProcess.started_at,
-        scanProcess.ended_at
+        scanProcess.weaknessesArr,
       );
     } else {
       setTimeout(function () {
@@ -210,7 +209,78 @@ const scanStatus = async (sid) => {
   }
 };
 
-const resultScan = async (progress, severities, sid) => {
+const resultScan = async (progress, severities, sid, weaknessArr) => {
+  const report = await result(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
+  const weaknessArray = [...new Set(weaknessArr)];
+
+    let weaknessIsCount;
+    if(failedArgs.weakness_is !== ""){
+      const keywords = failedArgs.weakness_is.split(",");
+      weaknessIsCount = findWeaknessTitles(weaknessArray, keywords);
+    } else {
+      weaknessIsCount = [];
+    }
+  if (failedArgs.condition === "OR") {
+    if (
+      failedArgs.max_number_of_critical &&
+      failedArgs.max_number_of_critical < scanProcess.severities.critical
+    ) {
+      console.log("!! FAILED_ARGS : Critical limit exceeded.");
+      throw new Error(
+        "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+      );
+    } else if (
+      failedArgs.max_number_of_high &&
+      failedArgs.max_number_of_high < scanProcess.severities.high
+    ) {
+      console.log("!! FAILED_ARGS : High limit exceeded. ");
+      throw new Error(
+        "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+      );
+    } else if (weaknessIsCount.length > 0) {
+      console.log(
+        "!! FAILED_ARGS : Weaknesses entered in the weakness_is key were found during the scan."
+      );
+      throw new Error(
+        "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+      );
+    } else if (
+      failedArgs.sca_max_number_of_critical &&
+      failedArgs.sca_max_number_of_critical < report.scaSeverityCounts.Critical
+    ) {
+      console.log("!! FAILED_ARGS : Sca Critical limit exceeded.");
+      throw new Error(
+        "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+      );
+    } else if (
+      failedArgs.sca_max_number_of_high &&
+      failedArgs.sca_max_number_of_high < report.scaSeverityCounts.High
+    ) {
+      console.log("!! FAILED_ARGS : Sca High limit exceeded. ");
+      throw new Error(
+        "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+      );
+    }
+  } else if (failedArgs.condition === "AND") {
+    if (
+      (failedArgs.max_number_of_critical &&
+        failedArgs.max_number_of_critical < scanProcess.severities.critical) ||
+      (failedArgs.max_number_of_high &&
+        failedArgs.max_number_of_high < scanProcess.severities.high) ||
+      (failedArgs.sca_max_number_of_high &&
+        failedArgs.sca_max_number_of_high < report.scaSeverityCounts.High) ||
+      (failedArgs.sca_max_number_of_critical &&
+        failedArgs.sca_max_number_of_critical < report.scaSeverityCounts.Critical) ||
+      weaknessIsCount.length > 0
+    ) {
+      console.log(
+        "!! FAILED ARGS : Not all conditions are met according to the given arguments."
+      );
+      throw new Error(
+        "Pipeline interrupted because the FAILED_ARGS arguments you entered were found..."
+      );
+    }
+  }
   const reason = `Scan Completed... %${progress}`;
   console.log(
     "Result : " +
@@ -224,7 +294,6 @@ const resultScan = async (progress, severities, sid) => {
       " Low : " +
       severities.low
   );
-  const report = await result(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
   console.log("Report Created")   
   try {
     await saveSarif(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
@@ -240,7 +309,7 @@ const resultScan = async (progress, severities, sid) => {
     };
 
     try {
-      await axios.post(apiUrl, { note: report }, { headers });
+      await axios.post(apiUrl, { note: report.report }, { headers });
       console.log("The scan results have been added as a comment to the commits");
     } catch (error) {
       console.log("The scan was completed, but the report could not be sent as a comment.")
@@ -254,7 +323,7 @@ const resultScan = async (progress, severities, sid) => {
     };
 
     try {
-      await axios.post(apiUrl, { body: report }, { headers });
+      await axios.post(apiUrl, { body: report.report }, { headers });
       console.log("The scan results have been added as a comment to the merge request.");
     } catch (error) {
       console.log("The scan was completed, but the report could not be sent as a comment.")
