@@ -62,7 +62,9 @@ const login = async (CT_BASE_URL, CT_USERNAME, CT_PASSWORD) => {
       client_secret: CT_PASSWORD,
     });
   } catch (error) {
-    throw new Error(error.response.data.message);
+    if(error?.response?.data?.message) throw new Error(error.response.data.message);
+    else if(error?.message || error?.name) throw new Error(JSON.stringify({message: error?.message, name: error?.name || '', code: error?.code || '', err: error?.errno || '', errors: error?.errors}));
+    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
   }
   console.log("Login successful")
   return responseToken.data.access_token;
@@ -83,6 +85,7 @@ const check = async (CT_BASE_URL, projectName, authToken, CT_ORGANIZATION) => {
         type: null,
       };
     }
+    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
   }
   if (checkProject.data.type !== "gitlab") {
     throw new Error(
@@ -125,7 +128,8 @@ const create = async (
       }
     );
   } catch (error) {
-    throw new Error(error.response.data.message);
+    if(error?.response?.data?.message) throw new Error(error.response.data.message);
+    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
   }
   console.log("Project Created.")
   return createProject;
@@ -171,7 +175,8 @@ const start = async (
       }
     );
   } catch (error) {
-    throw new Error(error.response.data.message);
+    if(error?.response?.data?.message) throw new Error(error.response.data.message);
+    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
   }
   return scanStart;
 };
@@ -187,7 +192,8 @@ const status = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
       },
     });
   } catch (error) {
-    throw new Error(error.response.data.message);
+    if(error?.response?.data?.message) throw new Error(error.response.data.message);
+    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
   }
   severityLevels.forEach((level) => {
     severities[level] = scanProcess.data.severities?.[level] || 0;
@@ -214,7 +220,8 @@ const result = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
       },
     });
   } catch (error) {
-    throw new Error(error.response.data.message);
+    if(error?.response?.data?.message) throw new Error(error.response.data.message);
+    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
   }
   return {report: resultScan.data.report, scaSeverityCounts: resultScan.data.scaSeverityCounts};
 }
