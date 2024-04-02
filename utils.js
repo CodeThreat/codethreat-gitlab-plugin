@@ -63,7 +63,6 @@ const login = async (CT_BASE_URL, CT_USERNAME, CT_PASSWORD) => {
     });
   } catch (error) {
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
-    else if(error?.message || error?.name) throw new Error(JSON.stringify({message: error?.message, name: error?.name || '', code: error?.code || '', err: error?.errno || '', errors: error?.errors}));
     else throw new Error(JSON.stringify(error))
   }
   console.log("Login successful")

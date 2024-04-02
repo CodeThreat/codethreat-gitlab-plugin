@@ -51,6 +51,7 @@ console.log("CodeThreat Server: " + CT_BASE_URL);
 console.log("User: " + gitlabUserName);
 console.log("Project: " + projectName);
 console.log("Organization: " + CT_ORGANIZATION)
+console.log("Policy Name: " + failedArgs.policy_name)
 console.log("------------------------------")
 
 if(!gitlabPersonalAccessToken){
@@ -64,7 +65,7 @@ console.log('Commit Message ---> ', CI_COMMIT_MESSAGE);
 console.log('Commit ID ---> ', CI_COMMIT_SHA);
 console.log("------------------------------")
 
-let authToken, checked, scanProcess, cancellation;
+let authToken, checked, scanProcess;
 
 const loginIn = async () => {
   if (CT_TOKEN && (!CT_USERNAME || !CT_PASSWORD)) {
