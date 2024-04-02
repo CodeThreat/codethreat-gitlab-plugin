@@ -64,7 +64,7 @@ const login = async (CT_BASE_URL, CT_USERNAME, CT_PASSWORD) => {
   } catch (error) {
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
     else if(error?.message || error?.name) throw new Error(JSON.stringify({message: error?.message, name: error?.name || '', code: error?.code || '', err: error?.errno || '', errors: error?.errors}));
-    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
+    else throw new Error(JSON.stringify(error))
   }
   console.log("Login successful")
   return responseToken.data.access_token;
@@ -85,7 +85,7 @@ const check = async (CT_BASE_URL, projectName, authToken, CT_ORGANIZATION) => {
         type: null,
       };
     }
-    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
+    else throw new Error(JSON.stringify(error))
   }
   if (checkProject.data.type !== "gitlab") {
     throw new Error(
@@ -129,7 +129,7 @@ const create = async (
     );
   } catch (error) {
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
-    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
+    else throw new Error(JSON.stringify(error))
   }
   console.log("Project Created.")
   return createProject;
@@ -176,7 +176,7 @@ const start = async (
     );
   } catch (error) {
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
-    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
+    else throw new Error(JSON.stringify(error))
   }
   return scanStart;
 };
@@ -193,7 +193,7 @@ const status = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
     });
   } catch (error) {
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
-    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
+    else throw new Error(JSON.stringify(error))
   }
   severityLevels.forEach((level) => {
     severities[level] = scanProcess.data.severities?.[level] || 0;
@@ -221,7 +221,7 @@ const result = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
     });
   } catch (error) {
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
-    else throw new Error(JSON.stringify({cause: error?.cause || '', error: error?.errors || '' }))
+    else throw new Error(JSON.stringify(error))
   }
   return {report: resultScan.data.report, scaSeverityCounts: resultScan.data.scaSeverityCounts};
 }
