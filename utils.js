@@ -208,10 +208,10 @@ const status = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
   };
 };
 
-const result = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
+const result = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION, branch, project_name) => {
   let resultScan;
   try {
-    resultScan = await axios.get(`${CT_BASE_URL}/api/plugins/helper?sid=${sid}`, {
+    resultScan = await axios.get(`${CT_BASE_URL}/api/plugins/helper?sid=${sid}&branch=${branch}&project_name=${project_name}`, {
       headers: {
         Authorization: authToken,
         "x-ct-organization": CT_ORGANIZATION,
