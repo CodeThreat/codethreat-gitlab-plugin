@@ -36,7 +36,7 @@ You have two options to integrate this setup:
 FAILED_ARGS: '{
 "max_number_of_critical":5,
 "max_number_of_high":4,
-"weakness_is":"*.injection.*",
+"weakness_is":".*injection,buffer.over.read,mass.assigment",
 "condition":"OR"
 "sync_scan":true,
 "policy_name":"Advanced Security"
