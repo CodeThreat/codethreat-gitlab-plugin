@@ -30,23 +30,35 @@ You have two options to integrate this setup:
 -   `CT_TOKEN`: Codethreat USER API token.
 -   `CT_ORGANIZATION`: Codethreat organization name.
 -   `FAILED_ARGS`: Arguments to decide when the pipeline should fail due to security issues. Adjust based on your requirements.
-
+- **The permission setting required for the GITLAB ACCESS TOKEN you will create must include at least "api, read_user, read_repository".**
 
 ```yaml
 FAILED_ARGS: '{
 "max_number_of_critical":5,
 "max_number_of_high":4,
+"sca_max_number_of_critical":5,
+"sca_max_number_of_high":4,
 "weakness_is":".*injection,buffer.over.read,mass.assigment",
 "condition":"OR"
 "sync_scan":true,
 "policy_name":"Advanced Security"
-"sca_max_number_of_critical":5,
-"sca_max_number_of_high":4,
 }'
 ``` 
 
 - The values ​​in FAILED_ARGS are not required. If you do not want to enter these values, set `FAILED_ARGS: '{}'` under variables in your yaml file.
 - For policy_name, enter a valid policy name. For example, Advanced Security, SAST Scan, SCA Scan, etc. By default Advanced Security. 
+
+| Variable | Example Value | Description | Type | Required | Default |
+| --- | --- | --- | --- | --- | --- |
+| max_number_of_critical | 15 | Failed condition for maximum critical number of found issues | Number | No | N/A |
+| max_number_of_high | 15 | Failed condition for maximum high number of found issues | Number | No | N/A |
+| sca_max_number_of_critical | 15 | Failed condition for maximum critical number of found sca issues | Number | No | N/A |
+| sca_max_number_of_high | 15 | Failed condition for maximum high number of found sca issues | Number | No | N/A |
+| weakness_is | ".*injection,buffer.over.read,mass.assigment" | Failed condition for found issues weakness id's. | String | No | N/A |
+| automerge | true | If automerge is active and scan returns success, it allows PR to merge automatically . | Boolean | No | false |
+| condition | "OR" | It checks failed arguments(max_number_of_critical etc.) using with "and" or "or". | String | No | AND |
+| sync_scan | true | If you don't want to wait for the pipeline to finish scanning, set it to false | Boolean | No | true |
+| policy_name | "Advanced Security" | For example, Advanced Security, SAST Scan, SCA Scan, etc. By default Advanced Security. | String | No | Advanced Security |
 
 ## Scan Types
 
