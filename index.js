@@ -1,5 +1,5 @@
 const axios = require("axios");
-const fs = require('fs').promises;
+const fs = require("fs").promises;
 
 const projectName = process.env.CI_PROJECT_NAME;
 const projectID = process.env.CI_PROJECT_ID;
@@ -23,7 +23,7 @@ let gitlabBaseUrl = process.env.GITLAB_BASE_URL;
 
 let branch = CI_COMMIT_BRANCH;
 
-if(MERGE_REQUEST_IID){
+if (MERGE_REQUEST_IID) {
   branch = SOURCE_BRANCH_NAME;
 }
 
@@ -35,7 +35,7 @@ const {
   start,
   status,
   result,
-  saveSarif
+  saveSarif,
 } = require("./utils");
 
 const failedArgs = JSON.parse(process.env.FAILED_ARGS) || {};
@@ -43,27 +43,28 @@ if (failedArgs.automerge === undefined) failedArgs.automerge = false;
 if (failedArgs.condition === undefined) failedArgs.condition = "AND";
 if (failedArgs.weakness_is === undefined) failedArgs.weakness_is = "";
 if (failedArgs.sync_scan === undefined) failedArgs.sync_scan = true;
-if (failedArgs.policy_name === undefined) failedArgs.policy_name = 'Advanced Security';
+if (failedArgs.policy_name === undefined)
+  failedArgs.policy_name = "Advanced Security";
 if (!gitlabBaseUrl) gitlabBaseUrl = "https://gitlab.com";
 
-console.log("------------------------------")
+console.log("------------------------------");
 console.log("CodeThreat Server: " + CT_BASE_URL);
 console.log("User: " + gitlabUserName);
 console.log("Project: " + projectName);
-console.log("Organization: " + CT_ORGANIZATION)
-console.log("Policy Name: " + failedArgs.policy_name)
-console.log("------------------------------")
+console.log("Organization: " + CT_ORGANIZATION);
+console.log("Policy Name: " + failedArgs.policy_name);
+console.log("------------------------------");
 
-if(!gitlabPersonalAccessToken){
+if (!gitlabPersonalAccessToken) {
   console.log("Please enter GITLAB_ACCESS_TOKEN");
-  throw new Error("Please enter GITLAB_ACCESS_TOKEN")
+  throw new Error("Please enter GITLAB_ACCESS_TOKEN");
 }
 
-console.log("------------------------------")
-console.log('Commit Author ---> ', CI_COMMIT_AUTHOR);
-console.log('Commit Message ---> ', CI_COMMIT_MESSAGE);
-console.log('Commit ID ---> ', CI_COMMIT_SHA);
-console.log("------------------------------")
+console.log("------------------------------");
+console.log("Commit Author ---> ", CI_COMMIT_AUTHOR);
+console.log("Commit Message ---> ", CI_COMMIT_MESSAGE);
+console.log("Commit ID ---> ", CI_COMMIT_SHA);
+console.log("------------------------------");
 
 let authToken, checked, scanProcess;
 
@@ -74,7 +75,7 @@ const loginIn = async () => {
     authToken = await login(CT_BASE_URL, CT_USERNAME, CT_PASSWORD);
   } else {
     console.log("Please enter username and password or token.");
-    throw new Error("Please enter username and password or token.")
+    throw new Error("Please enter username and password or token.");
   }
 };
 
@@ -123,28 +124,17 @@ const scanStatus = async (sid) => {
       console.log("Scan Failed.");
       throw new Error("Scan Failed.");
     }
-    if(!failedArgs.sync_scan){
-      console.log("Scan started successfuly.")
+    if (!failedArgs.sync_scan) {
+      console.log("[CodeThreat]: Scan started successfuly.");
       return;
     }
     if (scanProcess.state !== "end") {
-      console.log(
-        "Scanning... " +
-          "%" +
-          scanProcess.progress +
-          " - Critical : " +
-          scanProcess.severities.critical +
-          " High : " +
-          scanProcess.severities.high +
-          " Medium : " +
-          scanProcess.severities.medium +
-          " Low : " +
-          scanProcess.severities.low);
+      console.log(`[CodeThreat]: Scan Status | Scanning... `);
 
-      const weaknessArray = [...new Set(scanProcess.weaknessesArr)];   
+      const weaknessArray = [...new Set(scanProcess.weaknessesArr)];
 
       let weaknessIsCount;
-      if(failedArgs.weakness_is !== ""){
+      if (failedArgs.weakness_is && failedArgs.weakness_is !== undefined && failedArgs.weakness_is !== "") {
         const keywords = failedArgs.weakness_is.split(",");
         weaknessIsCount = findWeaknessTitles(weaknessArray, keywords);
       } else {
@@ -179,7 +169,8 @@ const scanStatus = async (sid) => {
       } else if (failedArgs.condition === "AND") {
         if (
           (failedArgs.max_number_of_critical &&
-            failedArgs.max_number_of_critical < scanProcess.severities.critical) ||
+            failedArgs.max_number_of_critical <
+              scanProcess.severities.critical) ||
           (failedArgs.max_number_of_critical &&
             failedArgs.max_number_of_high < scanProcess.severities.high) ||
           weaknessIsCount.length > 0
@@ -198,12 +189,12 @@ const scanStatus = async (sid) => {
         scanProcess.progress,
         scanProcess.severities,
         sid,
-        scanProcess.weaknessesArr,
+        scanProcess.weaknessesArr
       );
     } else {
       setTimeout(function () {
         scanStatus(sid);
-      }, 5000);
+      }, 30000);
     }
   } catch (error) {
     console.log(error.message);
@@ -211,16 +202,29 @@ const scanStatus = async (sid) => {
 };
 
 const resultScan = async (progress, severities, sid, weaknessArr) => {
-  const report = await result(CT_BASE_URL, sid, authToken, CT_ORGANIZATION, branch, projectName);
+  const report = await result(
+    CT_BASE_URL,
+    sid,
+    authToken,
+    CT_ORGANIZATION,
+    branch,
+    projectName
+  );
+  if (report.type === null) {
+    console.log(
+      "[CodeThreat]: Scan completed successfully, but report not created."
+    );
+    return;
+  }
   const weaknessArray = [...new Set(weaknessArr)];
 
-    let weaknessIsCount;
-    if(failedArgs.weakness_is !== ""){
-      const keywords = failedArgs.weakness_is.split(",");
-      weaknessIsCount = findWeaknessTitles(weaknessArray, keywords);
-    } else {
-      weaknessIsCount = [];
-    }
+  let weaknessIsCount;
+  if (failedArgs.weakness_is && failedArgs.weakness_is !== undefined && failedArgs.weakness_is !== "") {
+    const keywords = failedArgs.weakness_is.split(",");
+    weaknessIsCount = findWeaknessTitles(weaknessArray, keywords);
+  } else {
+    weaknessIsCount = [];
+  }
   if (failedArgs.condition === "OR") {
     if (
       failedArgs.max_number_of_critical &&
@@ -271,7 +275,8 @@ const resultScan = async (progress, severities, sid, weaknessArr) => {
       (failedArgs.sca_max_number_of_high &&
         failedArgs.sca_max_number_of_high < report.scaSeverityCounts.High) ||
       (failedArgs.sca_max_number_of_critical &&
-        failedArgs.sca_max_number_of_critical < report.scaSeverityCounts.Critical) ||
+        failedArgs.sca_max_number_of_critical <
+          report.scaSeverityCounts.Critical) ||
       weaknessIsCount.length > 0
     ) {
       console.log(
@@ -282,27 +287,15 @@ const resultScan = async (progress, severities, sid, weaknessArr) => {
       );
     }
   }
-  const reason = `Scan Completed... %${progress}`;
-  console.log(
-    "Result : " +
-      reason +
-      "- Critical : " +
-      severities.critical +
-      " High : " +
-      severities.high +
-      " Medium : " +
-      severities.medium +
-      " Low : " +
-      severities.low
-  );
-  console.log("Report Created")   
+
+  console.log("[CodeThreat]: Scan completed successfully.");
   try {
     await saveSarif(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
   } catch (error) {
-    console.log("sarif report generation failed: " + error.message)
+    console.log("Sarif report generation failed: " + error.message);
   }
-    
-  if(!MERGE_REQUEST_IID) {
+
+  if (!MERGE_REQUEST_IID) {
     const apiUrl = `${gitlabBaseUrl}/api/v4/projects/${projectID}/repository/commits/${CI_COMMIT_SHA}/comments`;
     const headers = {
       "Content-Type": "application/json",
@@ -311,9 +304,11 @@ const resultScan = async (progress, severities, sid, weaknessArr) => {
 
     try {
       await axios.post(apiUrl, { note: report.report }, { headers });
-      console.log("The scan results have been added as a comment to the commits");
+      console.log("[CodeThreat]: Report Created.");
     } catch (error) {
-      console.log("The scan was completed, but the report could not be sent as a comment.")
+      console.log(
+        "The scan was completed, but the report could not be sent as a comment."
+      );
       console.log(error.message);
     }
   } else if (MERGE_REQUEST_IID) {
@@ -325,13 +320,15 @@ const resultScan = async (progress, severities, sid, weaknessArr) => {
 
     try {
       await axios.post(apiUrl, { body: report.report }, { headers });
-      console.log("The scan results have been added as a comment to the merge request.");
+      console.log("[CodeThreat]: Report Created.");
     } catch (error) {
-      console.log("The scan was completed, but the report could not be sent as a comment.")
+      console.log(
+        "The scan was completed, but the report could not be sent as a comment."
+      );
       console.log(error.message);
     }
   }
-}
+};
 
 (async () => {
   let start;

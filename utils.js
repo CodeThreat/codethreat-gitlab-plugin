@@ -65,7 +65,7 @@ const login = async (CT_BASE_URL, CT_USERNAME, CT_PASSWORD) => {
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
     else throw new Error(JSON.stringify(error))
   }
-  console.log("Login successful")
+  console.log("[CodeThreat]: Login successful")
   return responseToken.data.access_token;
 };
 
@@ -130,7 +130,7 @@ const create = async (
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
     else throw new Error(JSON.stringify(error))
   }
-  console.log("Project Created.")
+  console.log("[CodeThreat]: Project Created.")
   return createProject;
 };
 
@@ -219,6 +219,7 @@ const result = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION, branch, proj
       },
     });
   } catch (error) {
+    if(error.response.status === 404) return { type: null }
     if(error?.response?.data?.message) throw new Error(error.response.data.message);
     else throw new Error(JSON.stringify(error))
   }
@@ -240,7 +241,7 @@ const saveSarif = async (ctServer, sid, authToken, orgname) => {
     const artifactPath = 'codethreat.sarif';
     await fs.writeFile(artifactPath, sarifData);
 
-    console.log(`SARIF report saved to ${artifactPath}`);
+    console.log(`[CodeThreat]: Sarif report saved to ${artifactPath}`);
   } catch (error) {
     throw new Error(`Failed to save SARIF report: ${error.response?.data?.message || error.message}`);
   }
