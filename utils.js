@@ -195,7 +195,7 @@ const status = async (CT_BASE_URL, sid, authToken, CT_ORGANIZATION) => {
     else throw new Error(JSON.stringify(error))
   }
   severityLevels.forEach((level) => {
-    severities[level] = scanProcess.data.severities?.[level] || 0;
+    severities[level] = scanProcess.data.sast_severities?.[level] || 0;
   });
   return {
     progress: scanProcess.data.progress_data.progress,
