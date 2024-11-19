@@ -290,7 +290,7 @@ const resultScan = async (progress, severities, sid, weaknessArr) => {
 
   console.log("[CodeThreat]: Scan completed successfully.");
   try {
-    await saveSarif(CT_BASE_URL, sid, authToken, CT_ORGANIZATION);
+    await saveSarif(CT_BASE_URL, sid, authToken, CT_ORGANIZATION, projectName, branch);
   } catch (error) {
     console.log("Sarif report generation failed: " + error.message);
   }

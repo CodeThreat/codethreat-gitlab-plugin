@@ -1,4 +1,5 @@
 const axios = require("axios");
+const fs = require('fs').promises
 
 const severityLevels = ["critical", "high", "medium", "low"];
 
@@ -262,10 +263,10 @@ const result = async (
   };
 };
 
-const saveSarif = async (ctServer, sid, authToken, orgname) => {
+const saveSarif = async (ctServer, sid, authToken, orgname, projectName, branch) => {
   try {
     const response = await axios.get(
-      `${ctServer}/api/report/scan/create?sid=${sid}&reportType=sarif`,
+      `${ctServer}/api/report/scan/create?sid=${sid}&projectName=${projectName}&branch=${branch}&reportType=sarif`,
       {
         headers: {
           Authorization: authToken,
