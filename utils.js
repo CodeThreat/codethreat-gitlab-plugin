@@ -1,5 +1,13 @@
 const axios = require("axios");
-const fs = require('fs').promises
+const fs = require("fs").promises;
+
+const {
+  checkLower1_7_8,
+  checkUpper1_7_8,
+  compareVersions,
+} = require("./adapter");
+
+let apiVersion;
 
 const severityLevels = ["critical", "high", "medium", "low"];
 
@@ -68,35 +76,29 @@ const login = async (CT_BASE_URL, CT_USERNAME, CT_PASSWORD) => {
     else throw new Error(JSON.stringify(error));
   }
   console.log("[CodeThreat]: Login successful");
+  if (responseToken.headers["x-api-version"])
+    apiVersion = responseToken.headers["x-api-version"];
   return responseToken.data.access_token;
 };
 
 const check = async (CT_BASE_URL, projectName, authToken, CT_ORGANIZATION) => {
   let checkProject;
-  try {
-    checkProject = await axios.get(
-      `${CT_BASE_URL}/api/project?key=${projectName}`,
-      {
-        headers: {
-          Authorization: authToken,
-          "x-ct-organization": CT_ORGANIZATION,
-        },
-      }
+  const compareVersion = compareVersions("1.7.8", apiVersion);
+  if (compareVersion === 1)
+    checkProject = await checkLower1_7_8(
+      CT_BASE_URL,
+      projectName,
+      authToken,
+      CT_ORGANIZATION
     );
-  } catch (error) {
-    if (error.response.data.code === 404) {
-      return {
-        type: null,
-      };
-    } else if (error.response && error.response.data) {
-      throw new Error(JSON.stringify(error.response.data));
-    } else throw new Error(JSON.stringify(error));
-  }
-  if (checkProject.data.type !== "gitlab") {
-    throw new Error(
-      "There is a project with this name, but its type is not gitlab."
+  else if (compareVersion === -1)
+    checkProject = await checkUpper1_7_8(
+      CT_BASE_URL,
+      projectName,
+      authToken,
+      CT_ORGANIZATION
     );
-  }
+
   return checkProject;
 };
 
@@ -263,7 +265,14 @@ const result = async (
   };
 };
 
-const saveSarif = async (ctServer, sid, authToken, orgname, projectName, branch) => {
+const saveSarif = async (
+  ctServer,
+  sid,
+  authToken,
+  orgname,
+  projectName,
+  branch
+) => {
   try {
     const response = await axios.get(
       `${ctServer}/api/report/scan/create?sid=${sid}&projectName=${projectName}&branch=${branch}&reportType=sarif`,
