@@ -19,5 +19,5 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           docker build -t codethreatdoc/codethreat-gitlab-job:latest .
-          docker tag codethreat-gitlab-job codethreatdoc/codethreat-gitlab-job:latest
+          docker tag codethreatdoc/codethreat-gitlab-job:latest codethreatdoc/codethreat-gitlab-job:latest
           docker push codethreatdoc/codethreat-gitlab-job:latest
