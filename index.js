@@ -36,6 +36,7 @@ const {
   status,
   result,
   saveSarif,
+  getOrg
 } = require("./utils");
 
 const failedArgs = JSON.parse(process.env.FAILED_ARGS) || {};
@@ -71,6 +72,7 @@ let authToken, checked, scanProcess;
 const loginIn = async () => {
   if (CT_TOKEN && (!CT_USERNAME || !CT_PASSWORD)) {
     authToken = CT_TOKEN;
+    await getOrg(CT_BASE_URL, authToken, CT_ORGANIZATION)
   } else if (CT_USERNAME && CT_PASSWORD) {
     authToken = await login(CT_BASE_URL, CT_USERNAME, CT_PASSWORD);
   } else {

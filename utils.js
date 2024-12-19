@@ -76,9 +76,34 @@ const login = async (CT_BASE_URL, CT_USERNAME, CT_PASSWORD) => {
     else throw new Error(JSON.stringify(error));
   }
   console.log("[CodeThreat]: Login successful");
-  if (responseToken.headers["x-api-version"])
+  if (responseToken.headers["x-api-version"]) {
     apiVersion = responseToken.headers["x-api-version"];
+    console.log(`[CodeThreat]: Api Version: ${apiVersion}`);
+  }
   return responseToken.data.access_token;
+};
+
+const getOrg = async (CT_BASE_URL, authToken, CT_ORGANIZATION) => {
+  let response;
+  try {
+    response = await axios.get(
+      `${CT_BASE_URL}/api/organization?key=${CT_ORGANIZATION}`,
+      {
+        headers: {
+          Authorization: authToken,
+          "x-ct-organization": CT_ORGANIZATION,
+        },
+      }
+    );
+  } catch (error) {
+    if (error?.response?.data?.message)
+      throw new Error(error.response.data.message);
+    else throw new Error(JSON.stringify(error));
+  }
+  if (response.headers["x-api-version"]) {
+    apiVersion = response.headers["x-api-version"];
+    console.log(`[CodeThreat]: Api Version: ${apiVersion}`);
+  }
 };
 
 const check = async (CT_BASE_URL, projectName, authToken, CT_ORGANIZATION) => {
@@ -310,4 +335,5 @@ module.exports = {
   status,
   result,
   saveSarif,
+  getOrg
 };
