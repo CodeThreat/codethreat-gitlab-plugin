@@ -18,6 +18,8 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t codethreatdoc/codethreat-gitlab-job:latest .
-          docker tag codethreatdoc/codethreat-gitlab-job:latest codethreatdoc/codethreat-gitlab-job:latest
+          TAG=${GITHUB_SHA::7}
+          docker build --no-cache -t codethreatdoc/codethreat-gitlab-job:${TAG} .
+          docker push codethreatdoc/codethreat-gitlab-job:${TAG}
+          docker tag codethreatdoc/codethreat-gitlab-job:${TAG} codethreatdoc/codethreat-gitlab-job:latest
           docker push codethreatdoc/codethreat-gitlab-job:latest
