@@ -13,8 +13,8 @@ variables:
 codethreat-sast-scan:
   stage: test
   image:
-    name: codethreatdoc/codethreat-gitlab-job
-    entrypoint: ['']
+    name: codethreatdoc/codethreat-gitlab-job:latest
+    pull_policy: always
   script:
     - cd /codethreat-sast-cli && npm start
   rules:
@@ -27,8 +27,8 @@ codethreat-sast-scan:
 codethreat-sast-scan-manual:
   stage: test
   image:
-    name: codethreatdoc/codethreat-gitlab-job
-    entrypoint: ['']
+    name: codethreatdoc/codethreat-gitlab-job:latest
+    pull_policy: always
   script:
     - cd /codethreat-sast-cli && npm start
   when: manual
