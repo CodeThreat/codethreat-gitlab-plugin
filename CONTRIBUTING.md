@@ -102,10 +102,9 @@ npm run lint
 
 1. Update documentation for any new features or changes
 2. Add or update tests as needed
-3. Update CHANGELOG.md following the existing format
-4. Ensure all CI checks pass
-5. Get review from at least one maintainer
-6. Squash commits before merge
+3. Ensure all CI checks pass
+4. Get review from at least one maintainer
+5. Squash commits before merge
 
 ## Release Process
 
@@ -115,9 +114,8 @@ npm run lint
    git checkout -b release/v1.2.3
    ```
 3. Update version numbers
-4. Update CHANGELOG.md
-5. Create pull request to `main`
-6. After merge, tag the release
+4. Create pull request to `main`
+5. After merge, tag the release
    ```bash
    git tag -a v1.2.3 -m "Release v1.2.3"
    ```
