@@ -16,10 +16,23 @@ jobs:
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
+      - name: Get current timestamp
+        id: timestamp
+        run: echo "::set-output name=timestamp::$(date +'%Y%m%d_%H%M%S')"
+
       - name: Build and Push Docker Image
         run: |
-          TAG=${GITHUB_SHA::7}
-          docker build --no-cache -t codethreatdoc/codethreat-gitlab-job:${TAG} .
-          docker push codethreatdoc/codethreat-gitlab-job:${TAG}
-          docker tag codethreatdoc/codethreat-gitlab-job:${TAG} codethreatdoc/codethreat-gitlab-job:latest
+          # Clear Docker cache
+          docker builder prune -f
+
+          # Build with no-cache flag and multiple tags
+          docker build --no-cache \
+            -t codethreatdoc/codethreat-gitlab-job:latest \
+            -t codethreatdoc/codethreat-gitlab-job:${{ github.sha }} \
+            -t codethreatdoc/codethreat-gitlab-job:${{ steps.timestamp.outputs.timestamp }} \
+            .
+
+          # Push all tags
           docker push codethreatdoc/codethreat-gitlab-job:latest
+          docker push codethreatdoc/codethreat-gitlab-job:${{ github.sha }}
+          docker push codethreatdoc/codethreat-gitlab-job:${{ steps.timestamp.outputs.timestamp }}

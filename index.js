@@ -54,7 +54,6 @@ console.log("User: " + gitlabUserName);
 console.log("Project: " + projectName);
 console.log("Organization: " + CT_ORGANIZATION);
 console.log("Policy Name: " + failedArgs.policy_name);
-console.log("------------------------------");
 
 if (!gitlabPersonalAccessToken) {
   console.log("Please enter GITLAB_ACCESS_TOKEN");
