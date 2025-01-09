@@ -54,6 +54,7 @@ console.log("User: " + gitlabUserName);
 console.log("Project: " + projectName);
 console.log("Organization: " + CT_ORGANIZATION);
 console.log("Policy Name: " + failedArgs.policy_name);
+console.log("------------------------------");
 
 if (!gitlabPersonalAccessToken) {
   console.log("Please enter GITLAB_ACCESS_TOKEN");
@@ -69,14 +70,22 @@ console.log("------------------------------");
 let authToken, checked, scanProcess;
 
 const loginIn = async () => {
-  if (CT_TOKEN && (!CT_USERNAME || !CT_PASSWORD)) {
-    authToken = CT_TOKEN;
-    await getOrg(CT_BASE_URL, authToken, CT_ORGANIZATION)
-  } else if (CT_USERNAME && CT_PASSWORD) {
-    authToken = await login(CT_BASE_URL, CT_USERNAME, CT_PASSWORD);
-  } else {
+  if (!CT_TOKEN && (!CT_USERNAME || !CT_PASSWORD)) {
     console.log("Please enter username and password or token.");
     throw new Error("Please enter username and password or token.");
+  }
+
+  try {
+    if (CT_TOKEN) {
+      authToken = CT_TOKEN;
+      await getOrg(CT_BASE_URL, authToken, CT_ORGANIZATION);
+    } else if (CT_USERNAME && CT_PASSWORD) {
+      authToken = await login(CT_BASE_URL, CT_USERNAME, CT_PASSWORD);
+    }
+    return authToken;
+  } catch (error) {
+    if (error?.response?.data?.message) throw new Error(error.response.data.message);
+    throw error;
   }
 };
 
@@ -101,7 +110,7 @@ const createProject = async () => {
 };
 
 const startScan = async () => {
-  return await start(
+  const scanStart = await start(
     CT_BASE_URL,
     projectName,
     branch,
@@ -116,6 +125,8 @@ const startScan = async () => {
     failedArgs.policy_name,
     CT_ORGANIZATION
   );
+
+  await scanStatus(scanStart.data.scan_id);
 };
 
 const scanStatus = async (sid) => {
@@ -199,6 +210,7 @@ const scanStatus = async (sid) => {
     }
   } catch (error) {
     console.log(error.message);
+    throw error;
   }
 };
 
@@ -331,15 +343,27 @@ const resultScan = async (progress, severities, sid, weaknessArr) => {
   }
 };
 
-(async () => {
-  let start;
+const main = async () => {
   try {
     await loginIn();
     checked = await checkProject();
     if (checked.type === null) await createProject();
-    start = await startScan();
-    await scanStatus(start.data.scan_id);
+    await startScan();
   } catch (error) {
-    throw new Error(error);
+    throw error;
   }
-})();
+};
+
+module.exports = {
+  loginIn,
+  startScan,
+  checkProject,
+  createProject
+};
+
+if (require.main === module) {
+  main().catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
+}
